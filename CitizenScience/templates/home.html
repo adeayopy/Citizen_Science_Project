@@ -1,8 +1,14 @@
 {%extends "layout.html"%}
 {%block content%}
-    
-    <article class="media content-section">    
-        <img class="" src="{{url_for('static', filename='new_weed_images/'+ image_file.name)}}">
-    </article>
-     
+
+<div class="row">
+    <div class="column">
+        <img src="{{url_for('static', filename='new_weed_images/'+ image_file[0].name)}}" alt="Snow" style="width:100%">
+    </div>
+    <div class="column">
+        <img src="{{url_for('static', filename='new_weed_images/'+ image_file[1].name)}}" alt="Forest"
+            style="width:100%">
+    </div>
+</div>
+
 {%endblock content%}
