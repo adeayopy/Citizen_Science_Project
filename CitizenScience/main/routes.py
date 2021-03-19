@@ -1,16 +1,15 @@
 import os
+import re
 import secrets
 import random
 from PIL import Image
-from flask import Blueprint, render_template, url_for 
+from flask import Blueprint, render_template, url_for, request, redirect 
 from CitizenScience import app, db
 from CitizenScience.models import Picture
+from CitizenScience.main.forms import VerifyForm
 
 
 main=Blueprint('main', __name__)
-
-import os
-from PIL import Image
 
 
 #Use function once....I will get a way to sync
@@ -45,10 +44,45 @@ def random_two():
 
 
 #This route reduces the size of picture files, copy them into another folder and display on webpage
-@main.route('/') 
-@main.route('/home')
-def home():   
+@main.route('/', methods=['POST', 'GET']) 
+@main.route('/home', methods=['POST', 'GET'])
+def home(): 
+    forms=VerifyForm()  
     # Use only save_picture function when loading a new set of pictures... I will fix this later
     # save_picture()
-    select_two_image=random_two()
-    return render_template('home.html', image_file=select_two_image)
+
+   
+    if request.method=='GET':
+        global select_two_images
+        select_two_images=random_two()
+       
+    elif request.method=='POST':
+        #name1=request.form.getvalue('image_file[0]')
+        selected_option=request.form.get('image_file')
+     
+        print(selected_option)
+        selected_rank=re.findall('\s\'([0-9]+)',selected_option)
+        print(selected_rank)
+        selected_rank=''.join(map(str,selected_rank))
+
+        print(select_two_images)
+        presented_options=re.findall('\s\'([0-9]+)',str(select_two_images))
+        print(presented_options)
+
+        if int(min(presented_options)) < int(selected_rank):
+            change_to_lower=Picture.query.filter_by(rank=int(selected_rank))
+            change_to_lower.rank=int(min(presented_options))
+
+            change_to_higher=Picture.query.filter_by(rank=int(min(presented_options)))
+            change_to_higher.rank=int(max(presented_options))
+            db.session.commit() 
+        return redirect(url_for('main.submit'))      
+    
+   
+    return render_template('home.html', image_file=select_two_images, form=forms)
+
+# 
+
+@main.route('/submit')
+def submit():
+    return render_template('submit.html') 
