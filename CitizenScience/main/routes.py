@@ -47,7 +47,6 @@ def random_two():
     
     return img
 
-
 #This route reduces the size of picture files, copy them into another folder and display on webpage
 @main.route('/', methods=['POST', 'GET']) 
 @main.route('/home', methods=['POST', 'GET'])
