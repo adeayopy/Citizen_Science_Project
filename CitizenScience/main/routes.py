@@ -3,7 +3,7 @@ import re
 import secrets
 import random
 from PIL import Image
-from flask import Blueprint, render_template, url_for, request, redirect 
+from flask import Blueprint, render_template, url_for, request, redirect, flash
 from CitizenScience import app, db
 from CitizenScience.models import Picture
 from CitizenScience.main.forms import VerifyForm
@@ -32,14 +32,19 @@ main=Blueprint('main', __name__)
 #         db.session.add(store_pictures)
 #         db.session.commit()
 
+# save_picture()
+
 # Function to randomise and return 2 distinct pictures
 def random_two():
     img=[]
-    for picture in range(2):
-        picture_q=random.choice(Picture.query.all())
-        img.append(picture_q)
-    if img[0]==img[1]:
+    picture_one=random.choice(Picture.query.all())
+    picture_two=random.choice(Picture.query.all())
+    if picture_one == picture_two:
         random_two()
+    else:
+        img.append(picture_one)
+        img.append(picture_two)
+    
     return img
 
 
@@ -60,24 +65,34 @@ def home():
         #name1=request.form.getvalue('image_file[0]')
         selected_option=request.form.get('image_file')
      
-        print(selected_option)
-        selected_rank=re.findall('\s\'([0-9]+)',selected_option)
-        print(selected_rank)
-        selected_rank=''.join(map(str,selected_rank))
+        try:
 
-        print(select_two_images)
-        presented_options=re.findall('\s\'([0-9]+)',str(select_two_images))
-        print(presented_options)
+            # print(selected_option)
+            selected_rank=re.findall('\s\'([0-9]+)',selected_option)
+            #print(selected_rank)
+            selected_rank=''.join(map(str,selected_rank))
 
-        if int(min(presented_options)) < int(selected_rank):
-            change_to_lower=Picture.query.filter_by(rank=int(selected_rank))
-            change_to_lower.rank=int(min(presented_options))
+            print(select_two_images)
 
-            change_to_higher=Picture.query.filter_by(rank=int(min(presented_options)))
-            change_to_higher.rank=int(max(presented_options))
-            db.session.commit() 
-        return redirect(url_for('main.submit'))      
-    
+            presented_options=list(map(int,re.findall('\s\'([0-9]+)',str(select_two_images))))
+            #print(int(min(presented_options)))
+            #print(int(max(presented_options)))
+
+            if min(presented_options) < int(selected_rank):
+                change_to_lower=Picture.query.filter_by(rank=int(selected_rank)).first()            
+                change_to_higher=Picture.query.filter_by(rank=int(min(presented_options))).first()
+
+                change_to_lower.rank=min(presented_options) 
+                print(change_to_lower.rank)
+                change_to_higher.rank=max(presented_options)  
+                         
+                db.session.commit() 
+            
+            return redirect(url_for('main.submit'))  
+
+        except:
+            flash('Kindly select a picture!', 'info')
+                   
    
     return render_template('home.html', image_file=select_two_images, form=forms)
 
@@ -86,3 +101,9 @@ def home():
 @main.route('/submit')
 def submit():
     return render_template('submit.html') 
+
+
+
+# from CitizenScience import db 
+# from CitizenScience.models  import Picture 
+# Picture.query.all()
